@@ -490,14 +490,42 @@ const AdminPanel = () => {
 
   // Copy channel URL to clipboard
   const copyToClipboard = (url) => {
-    navigator.clipboard.writeText(url);
-    setMessage('Channel URL copied to clipboard');
-    setMessageType('info');
-    
-    // Clear message after 3 seconds
-    setTimeout(() => {
-      setMessage(null);
-    }, 3000);
+    try {
+      // Modern approach using Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url);
+        setMessage('Channel URL copied to clipboard');
+        setMessageType('info');
+      } else {
+        // Fallback for browsers without clipboard API support
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';  // Avoid scrolling to bottom
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          setMessage(successful ? 'Channel URL copied to clipboard' : 'Failed to copy URL');
+          setMessageType(successful ? 'info' : 'warning');
+        } catch (err) {
+          setMessage('Failed to copy URL: ' + err);
+          setMessageType('danger');
+        }
+        
+        document.body.removeChild(textArea);
+      }
+      
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Copy to clipboard failed:', error);
+      setMessage('Failed to copy URL to clipboard');
+      setMessageType('danger');
+    }
   };
 
   return (
@@ -913,3 +941,4 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
